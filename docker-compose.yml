@@ -8,11 +8,12 @@ services:
     volumes:
       - ./data:/app/data
     ports:
-      # Without a domain: the app is reachable on http://<server-ip>:3000
-      # With the HTTPS profile below you can change this to "127.0.0.1:3000:3000"
-      - "${APP_PORT:-3000}:3000"
+      # Private by default: reachable only from the server itself (put nginx/Caddy in front).
+      # Set APP_BIND=0.0.0.0 in .env to expose http://<server-ip>:3000 directly.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3000}:3000"
 
-  # Automatic HTTPS (Let's Encrypt). Needs a domain pointing at the server and ports 80/443 open.
+  # Automatic HTTPS (Let's Encrypt) for a server WITHOUT an existing web server on 80/443.
+  # If nginx already runs on the server, use deploy/nginx-chafcrm.conf instead.
   # Start with:  docker compose --profile https up -d
   caddy:
     image: caddy:2

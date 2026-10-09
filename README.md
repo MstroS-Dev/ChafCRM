@@ -51,7 +51,20 @@ Then edit `~/ChafCRM/.env`:
 
 Apply the changes with `docker compose up -d`.
 
-### HTTPS with a domain (recommended — Telegram needs it, and links look better)
+### Server that already runs nginx (other websites)
+The app listens only on `127.0.0.1:3000` and nginx forwards a subdomain to it. With [sslip.io](https://sslip.io), `crm.<ip>.sslip.io` works without any DNS setup:
+
+```bash
+D=crm.16.170.108.223.sslip.io   # your subdomain
+sed -i "s|^BASE_URL=.*|BASE_URL=https://$D|" .env
+sudo docker compose up -d --build
+sudo sed "s/CRM_DOMAIN/$D/" deploy/nginx-chafcrm.conf | sudo tee /etc/nginx/sites-available/chafcrm >/dev/null
+sudo ln -sf /etc/nginx/sites-available/chafcrm /etc/nginx/sites-enabled/chafcrm
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d $D --redirect
+```
+
+### HTTPS with a domain (no other web server) (recommended — Telegram needs it, and links look better)
 1. Point a DNS A-record, e.g. `crm.example.com`, at the server's IP.
 2. In `.env`, set `DOMAIN=crm.example.com` and `BASE_URL=https://crm.example.com`.
 3. Run `docker compose --profile https up -d`. Caddy gets the certificate automatically.

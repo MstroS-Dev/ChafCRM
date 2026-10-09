@@ -51,7 +51,13 @@ if [ ! -f .env ]; then
   sed -i "s|^APP_SECRET=.*|APP_SECRET=$(openssl rand -hex 32)|" .env
   sed -i "s|^WEBHOOK_KEY=.*|WEBHOOK_KEY=$(openssl rand -hex 16)|" .env
   sed -i "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=${ADMIN_PW}|" .env
-  [ -n "$PUBLIC_IP" ] && sed -i "s|^BASE_URL=.*|BASE_URL=http://${PUBLIC_IP}:3000|" .env
+  if systemctl is-active --quiet nginx; then
+    # Existing nginx on this server: keep the app private and serve it through nginx
+    [ -n "$PUBLIC_IP" ] && sed -i "s|^BASE_URL=.*|BASE_URL=https://crm.${PUBLIC_IP}.sslip.io|" .env
+  else
+    sed -i "s|^APP_BIND=.*|APP_BIND=0.0.0.0|" .env
+    [ -n "$PUBLIC_IP" ] && sed -i "s|^BASE_URL=.*|BASE_URL=http://${PUBLIC_IP}:3000|" .env
+  fi
   echo
   echo "  Manager login:  admin / ${ADMIN_PW}"
   echo "  (saved in $APP_DIR/.env — edit that file to change settings)"
@@ -66,6 +72,12 @@ else
   $DOCKER compose up -d --build
 fi
 
+$DOCKER builder prune -af >/dev/null 2>&1 || true   # free disk space used by the build
+
 log "Done"
-grep -E '^BASE_URL=' .env | sed 's/BASE_URL=/  Open: /'
-echo "  Make sure the EC2 security group allows inbound TCP 3000 (or 80/443 when using a domain)."
+grep -E '^BASE_URL=' .env | sed 's/BASE_URL=/  Address: /'
+if systemctl is-active --quiet nginx && ! grep -qE '^DOMAIN=.+' .env; then
+  echo "  nginx is running on this server: connect it with deploy/nginx-chafcrm.conf (see README)."
+else
+  echo "  Make sure the EC2 security group allows inbound TCP 3000 (or 80/443 when using a domain)."
+fi
