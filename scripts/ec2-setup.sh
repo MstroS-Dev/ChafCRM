@@ -34,8 +34,12 @@ DOCKER="docker"; docker info >/dev/null 2>&1 || DOCKER="sudo docker"
 if [ ! -d "$APP_DIR/.git" ]; then
   log "Cloning $REPO_URL into $APP_DIR"
   git clone "$REPO_URL" "$APP_DIR"
+  cd "$APP_DIR"
+else
+  log "Updating code in $APP_DIR"
+  cd "$APP_DIR"
+  git pull --ff-only || true
 fi
-cd "$APP_DIR"
 
 # ── 3. .env with generated secrets
 if [ ! -f .env ]; then
