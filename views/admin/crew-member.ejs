@@ -1,0 +1,51 @@
+<%- include('../partials/head', { title: c.name }) %>
+<div class="crumbs"><a href="/admin/crew">צוות וספקים</a></div>
+<div class="page-head">
+  <div>
+    <h1><%= c.name %></h1>
+    <div class="muted"><%= L.crewKind[c.kind] %><%= c.role ? ' · ' + c.role : '' %><%= c.active ? '' : ' · לא פעיל' %></div>
+  </div>
+  <a class="btn secondary sm" href="/admin/crew/<%= c.id %>/edit">עריכה</a>
+</div>
+<div class="grid-2">
+  <section class="card">
+    <h2>פרטים</h2>
+    <dl class="kv">
+      <dt>טלפון</dt><dd><% if (c.phone) { %><a class="ltr" href="tel:<%= c.phone %>"><%= c.phone %></a> · <a href="https://wa.me/<%= c.phone.replace(/\D/g,'').replace(/^0/, '972') %>" target="_blank" rel="noopener">WhatsApp</a><% } else { %>—<% } %></dd>
+      <dt>דוא״ל</dt><dd><%= c.email || '—' %></dd>
+      <dt>מחיר קבוע</dt><dd><%= u.money(c.default_price) || '—' %></dd>
+    </dl>
+    <% if (c.notes) { %><p class="pre small" style="margin-top:.75rem"><%= c.notes %></p><% } %>
+  </section>
+  <section class="card">
+    <h2>קישור אישי</h2>
+    <p class="small muted">דרך הקישור הזה <%= c.name.split(' ')[0] %> רואה את האירועים שלו, הלו״ז, המיקום ומאשר הגעה — בלי סיסמה ובלי נתונים כספיים. הקישור נשלח אוטומטית בהודעות השיבוץ.</p>
+    <div class="copy"><input id="crewlink" type="text" readonly value="<%= link %>"><button type="button" class="btn secondary sm" data-copy="crewlink">העתק</button></div>
+    <form method="post" action="/admin/crew/<%= c.id %>/token" style="margin-top:.6rem">
+      <button class="link small" data-confirm="הקישור הנוכחי יפסיק לעבוד. להמשיך?">החלף קישור (אם דלף)</button>
+    </form>
+  </section>
+</div>
+<section class="card" style="margin-top:1rem">
+  <h2>אירועים ותשלומים</h2>
+  <% if (!history.length) { %><div class="empty">עדיין לא שובץ לאירועים</div><% } else { %>
+  <div class="scroll-x"><table class="simple">
+    <tr><th>תאריך</th><th>אירוע</th><th>הגעה</th><th>מחיר</th><th>תשלום</th></tr>
+    <% history.forEach(function (h) { %>
+    <tr>
+      <td class="nowrap"><%= u.fmtDate(h.date) %></td>
+      <td><a href="/admin/events/<%= h.event_id %>"><%= h.event_name %></a><% if (h.event_status === 'cancelled') { %> <span class="badge b-cancelled">בוטל</span><% } %></td>
+      <td><span class="badge b-<%= h.confirm_status %>"><%= L.confirmStatus[h.confirm_status] %></span></td>
+      <td class="nowrap"><%= u.money(h.agreed_price) || '—' %></td>
+      <td><span class="badge b-<%= h.payment_status %>"><%= L.paymentStatus[h.payment_status] %></span><%= h.payment_status === 'deposit' && h.paid_amount ? ' ' + u.money(h.paid_amount) : '' %></td>
+    </tr>
+    <% }) %>
+  </table></div>
+  <% } %>
+</section>
+<section class="card">
+  <form method="post" action="/admin/crew/<%= c.id %>/delete">
+    <button class="btn danger sm" data-confirm="למחוק את <%= c.name %> מהמאגר?">מחיקה מהמאגר</button>
+  </form>
+</section>
+<%- include('../partials/foot') %>

@@ -1,0 +1,173 @@
+<%- include('../partials/head', { title: ev.name }) %>
+<div class="crumbs"><a href="/admin/events">אירועים</a></div>
+<div class="page-head">
+  <div>
+    <h1><%= ev.name %></h1>
+    <div class="muted"><%= u.fmtDateLong(ev.date) %><%= ev.event_type ? ' · ' + ev.event_type : '' %></div>
+  </div>
+  <div class="btns">
+    <span class="badge b-<%= ev.status %>"><%= L.eventStatus[ev.status] %></span>
+    <a class="btn secondary sm" href="/admin/events/<%= ev.id %>/edit">עריכה</a>
+  </div>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>פרטים</h2>
+    <dl class="kv">
+      <dt>לקוח</dt><dd><% if (client) { %><a href="/admin/clients/<%= client.id %>"><%= client.name %></a><% } else { %><%= ev.client_name || '—' %><% } %></dd>
+      <dt>מיקום</dt><dd><%= ev.venue || '—' %><% if (ev.address) { %><div class="small muted"><%= ev.address %></div><% } %>
+        <% if (u.wazeLink(ev)) { %><div class="small"><a href="<%= u.wazeLink(ev) %>" target="_blank" rel="noopener">ניווט ב-Waze ↗</a></div><% } %></dd>
+      <dt>הגעה</dt><dd><%= ev.arrival_time || '—' %></dd>
+      <dt>סאונד-צ׳ק</dt><dd><%= ev.soundcheck_time || '—' %></dd>
+      <dt>קבלת פנים</dt><dd><%= ev.reception_time || '—' %></dd>
+      <dt>נגנים</dt><dd><%= assignments.filter(a => a.kind === 'musician' && a.confirm_status !== 'declined').length %><%= ev.musicians_count ? ' / ' + ev.musicians_count : '' %></dd>
+      <dt>מחיר</dt><dd><%= u.money(ev.price) || '—' %></dd>
+      <dt>עלות צוות</dt><dd><%= u.money(totals.cost) || '₪0' %> <span class="small muted">(שולם <%= u.money(totals.paid) || '₪0' %>)</span></dd>
+    </dl>
+    <% if (ev.crew_notes) { %><h3 style="margin-top:1rem">דגשים לצוות</h3><div class="pre small"><%= ev.crew_notes %></div><% } %>
+    <% if (ev.tech_requirements) { %><h3 style="margin-top:1rem">דרישות טכניות</h3><div class="pre small"><%= ev.tech_requirements %></div><% } %>
+    <% if (ev.internal_notes) { %><h3 style="margin-top:1rem">הערות פנימיות</h3><div class="pre small"><%= ev.internal_notes %></div><% } %>
+
+    <div class="btns" style="margin-top:1rem">
+      <form method="post" action="/admin/events/<%= ev.id %>/status" class="btns">
+        <select name="status" style="width:auto;min-height:36px;padding:.25rem .5rem">
+          <% Object.keys(L.eventStatus).forEach(function (k) { %><option value="<%= k %>" <%= ev.status === k ? 'selected' : '' %>><%= L.eventStatus[k] %></option><% }) %>
+        </select>
+        <button class="btn secondary sm">עדכן סטטוס</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card" id="timeline">
+    <div class="card-head"><h2>לו״ז (Run Sheet)</h2></div>
+    <% if (!timeline.length) { %><div class="empty">אין עדיין פריטים בלו״ז</div><% } %>
+    <ul class="timeline">
+      <% timeline.forEach(function (t) { %>
+      <li><span class="t"><%= t.time || '—' %></span><span class="l"><%= t.label %> <% if (t.audience !== 'all') { %><span class="badge"><%= L.audience[t.audience] %></span><% } %></span></li>
+      <% }) %>
+    </ul>
+    <details class="more">
+      <summary>עריכת הלו״ז</summary>
+      <% if (timeline.length) { %>
+      <form method="post" action="/admin/events/<%= ev.id %>/timeline/save">
+        <% timeline.forEach(function (t) { %>
+        <div class="tl-edit">
+          <input type="time" name="time_<%= t.id %>" value="<%= t.time || '' %>" aria-label="שעה">
+          <input type="text" name="label_<%= t.id %>" value="<%= t.label %>" aria-label="תיאור">
+          <div class="opts">
+            <select name="audience_<%= t.id %>" aria-label="מי רואה">
+              <% Object.keys(L.audience).forEach(function (k) { %><option value="<%= k %>" <%= t.audience === k ? 'selected' : '' %>><%= L.audience[k] %></option><% }) %>
+            </select>
+            <input type="number" name="sort_<%= t.id %>" value="<%= t.sort %>" aria-label="סדר" title="סדר">
+            <label class="check small"><input type="checkbox" name="delete_<%= t.id %>" value="1"> מחק</label>
+          </div>
+        </div>
+        <% }) %>
+        <button class="btn sm" style="margin-top:.5rem">שמור לו״ז</button>
+      </form>
+      <% } %>
+      <form method="post" action="/admin/events/<%= ev.id %>/timeline" class="tl-edit" style="margin-top:.75rem">
+        <input type="time" name="time" aria-label="שעה">
+        <input type="text" name="label" placeholder="פריט חדש (למשל: ריקודים)" required>
+        <div class="opts">
+          <select name="audience"><% Object.keys(L.audience).forEach(function (k) { %><option value="<%= k %>"><%= L.audience[k] %></option><% }) %></select>
+          <button class="btn secondary sm">+ הוסף</button>
+        </div>
+      </form>
+    </details>
+  </section>
+</div>
+
+<section class="card" id="crew" style="margin-top:1rem">
+  <div class="card-head">
+    <h2>הרכב וספקים</h2>
+    <div class="btns">
+      <% if (assignments.some(a => a.confirm_status === 'pending')) { %>
+      <form method="post" action="/admin/events/<%= ev.id %>/notify-pending"><button class="btn secondary sm">שלח שוב לממתינים</button></form>
+      <% } %>
+      <% if (assignments.length) { %>
+      <form method="post" action="/admin/events/<%= ev.id %>/remind"><button class="btn secondary sm" data-confirm="לשלוח עכשיו תזכורת עם לו״ז ומיקום לכל המשובצים?">שלח תזכורת עכשיו</button></form>
+      <% } %>
+    </div>
+  </div>
+  <% if (ev.reminder_sent_at) { %><p class="tiny">תזכורת נשלחה: <%= ev.reminder_sent_at %> (UTC)</p><% } %>
+
+  <% if (!assignments.length) { %><div class="empty">עדיין לא שובצו נגנים או ספקים</div><% } %>
+  <% assignments.forEach(function (a) { %>
+  <div class="assign">
+    <div class="assign-top">
+      <div>
+        <a class="name" href="/admin/crew/<%= a.crew_id %>"><%= a.name %></a>
+        <span class="small muted"> · <%= a.position || a.role || L.crewKind[a.kind] %></span>
+        <div class="small muted"><span class="ltr"><%= a.phone || 'אין טלפון' %></span><%= a.notified_at ? ' · הודעה נשלחה' : ' · טרם נשלחה הודעה' %></div>
+      </div>
+      <div class="btns">
+        <span class="badge b-<%= a.confirm_status %>"><%= L.confirmStatus[a.confirm_status] %></span>
+        <span class="badge b-<%= a.payment_status %>"><%= L.paymentStatus[a.payment_status] %></span>
+      </div>
+    </div>
+    <details class="more">
+      <summary>עדכון / תשלום</summary>
+      <form method="post" action="/admin/events/<%= ev.id %>/assignments/<%= a.id %>">
+        <div class="fields three">
+          <div class="field"><label>תפקיד באירוע</label><input type="text" name="position" value="<%= a.position || '' %>" list="instruments"></div>
+          <div class="field"><label>אישור הגעה</label>
+            <select name="confirm_status"><% Object.keys(L.confirmStatus).forEach(function (k) { %><option value="<%= k %>" <%= a.confirm_status === k ? 'selected' : '' %>><%= L.confirmStatus[k] %></option><% }) %></select></div>
+          <div class="field"><label>מחיר מוסכם (₪)</label><input type="number" name="agreed_price" value="<%= a.agreed_price ?? '' %>"></div>
+          <div class="field"><label>סטטוס תשלום</label>
+            <select name="payment_status"><% Object.keys(L.paymentStatus).forEach(function (k) { %><option value="<%= k %>" <%= a.payment_status === k ? 'selected' : '' %>><%= L.paymentStatus[k] %></option><% }) %></select></div>
+          <div class="field"><label>שולם עד כה (₪)</label><input type="number" name="paid_amount" value="<%= a.paid_amount ?? '' %>"></div>
+          <div class="field"><label>הערה</label><input type="text" name="notes" value="<%= a.notes || '' %>"></div>
+        </div>
+        <div class="btns">
+          <button class="btn sm">שמור</button>
+        </div>
+      </form>
+      <div class="btns" style="margin-top:.5rem">
+        <form method="post" action="/admin/events/<%= ev.id %>/assignments/<%= a.id %>/notify"><button class="btn secondary sm">שלח הודעת שיבוץ</button></form>
+        <a class="btn secondary sm" href="/c/<%= a.token %>/a/<%= a.id %>" target="_blank" rel="noopener">התצוגה שלו ↗</a>
+        <form method="post" action="/admin/events/<%= ev.id %>/assignments/<%= a.id %>/delete"><button class="btn danger sm" data-confirm="להסיר את <%= a.name %> מהאירוע?">הסר</button></form>
+      </div>
+    </details>
+  </div>
+  <% }) %>
+
+  <details class="more" <%= assignments.length ? '' : 'open' %> style="margin-top:1rem">
+    <summary>+ שיבוץ נגנים / ספקים</summary>
+    <% if (!available.length) { %>
+      <p class="muted small">כל אנשי הצוות הפעילים כבר משובצים. <a href="/admin/crew/new">הוסף איש צוות חדש</a></p>
+    <% } else { %>
+    <form method="post" action="/admin/events/<%= ev.id %>/assign">
+      <% ['musician','tech','supplier'].forEach(function (kind) { const group = available.filter(c => c.kind === kind); if (!group.length) return; %>
+        <h3 style="margin:.75rem 0 .25rem"><%= L.crewKind[kind] %></h3>
+        <% group.forEach(function (c) { %>
+        <label class="check" style="padding:.3rem 0">
+          <input type="checkbox" name="crew_id" value="<%= c.id %>">
+          <span><%= c.name %> <span class="muted small">· <%= c.role || '' %><%= c.default_price ? ' · ' + u.money(c.default_price) : '' %></span>
+          <% if (busy.has(c.id)) { %><span class="badge b-warn">משובץ באירוע אחר באותו יום</span><% } %></span>
+        </label>
+        <% }) %>
+      <% }) %>
+      <div class="fields two" style="margin-top:.75rem">
+        <div class="field"><label>תפקיד באירוע <span class="tiny">(ריק = התפקיד הקבוע)</span></label><input type="text" name="position" list="instruments"></div>
+        <div class="field"><label>מחיר מוסכם <span class="tiny">(ריק = מחיר ברירת מחדל)</span></label><input type="number" name="agreed_price"></div>
+      </div>
+      <label class="check" style="margin-bottom:.75rem"><input type="checkbox" name="notify" value="1" checked> שלח הודעת WhatsApp עם פרטי האירוע וכפתור אישור הגעה</label>
+      <button class="btn">שבץ</button>
+    </form>
+    <% } %>
+  </details>
+  <datalist id="instruments"><% L.instruments.forEach(function (i) { %><option value="<%= i %>"><% }) %></datalist>
+</section>
+
+<section class="card">
+  <details class="more">
+    <summary style="color:var(--bad)">מחיקת האירוע</summary>
+    <form method="post" action="/admin/events/<%= ev.id %>/delete">
+      <p class="small muted">המחיקה מוחקת גם את הלו״ז והשיבוצים. לאירוע שלא יתקיים עדיף לשנות סטטוס ל״בוטל״.</p>
+      <button class="btn danger" data-confirm="למחוק את האירוע לצמיתות?">מחק לצמיתות</button>
+    </form>
+  </details>
+</section>
+<%- include('../partials/foot') %>

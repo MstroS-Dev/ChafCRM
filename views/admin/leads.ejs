@@ -1,0 +1,35 @@
+<%- include('../partials/head', { title: 'לידים' }) %>
+<div class="page-head">
+  <h1>לוח לידים</h1>
+  <a class="btn accent" href="/admin/leads/new">+ ליד ידני</a>
+</div>
+<div class="chips">
+  <% Object.keys(L.leadStatus).forEach(function (k) { %>
+  <a href="/admin/leads?status=<%= k %>" class="<%= status === k ? 'on' : '' %>"><%= L.leadStatus[k] %> (<%= counts[k] || 0 %>)</a>
+  <% }) %>
+</div>
+<section class="card">
+  <% if (!list.length) { %><div class="empty"><%= status === 'new' ? 'אין לידים שממתינים לאישור' : 'אין לידים בקטגוריה הזו' %></div><% } %>
+  <ul class="list">
+    <% list.forEach(function (l) { %>
+    <li>
+      <div class="row-link" style="align-items:flex-start">
+        <a class="row-main" href="/admin/leads/<%= l.id %>" style="color:inherit">
+          <div class="row-title"><%= l.name || 'ללא שם' %> <span class="small muted ltr"><%= l.phone || '' %></span></div>
+          <div class="row-sub"><%= l.event_type || 'אירוע' %> · <%= u.fmtDate(l.requested_date) || 'ללא תאריך' %><%= l.location ? ' · ' + l.location : '' %></div>
+          <div class="tiny"><%= L.leadSource[l.source] || l.source %> · <%= l.created_at %> UTC</div>
+        </a>
+        <% if (l.status === 'new') { %>
+        <div class="btns">
+          <form method="post" action="/admin/leads/<%= l.id %>/approve"><button class="btn ok sm">צור כרטיס לקוח</button></form>
+          <form method="post" action="/admin/leads/<%= l.id %>/reject"><button class="btn danger sm">לא רלוונטי</button></form>
+        </div>
+        <% } else if (l.client_id) { %>
+          <a class="btn secondary sm" href="/admin/clients/<%= l.client_id %>">לכרטיס</a>
+        <% } %>
+      </div>
+    </li>
+    <% }) %>
+  </ul>
+</section>
+<%- include('../partials/foot') %>

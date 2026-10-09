@@ -1,0 +1,13 @@
+<%- include('../partials/head', { title: 'כניסה', shell: 'public' }) %>
+<div class="hero"><div class="big"><%= brand %></div><p class="muted">כניסת מנהלים</p></div>
+<% if (!hasManagers) { %>
+  <div class="flash err">עדיין לא הוגדר מנהל. הגדר ADMIN_PASSWORD בקובץ ‎.env והפעל מחדש.</div>
+<% } %>
+<% if (error) { %><div class="flash err"><%= error %></div><% } %>
+<form method="post" action="/login" class="card">
+  <input type="hidden" name="next" value="<%= next %>">
+  <div class="field"><label for="u">שם משתמש</label><input id="u" name="username" type="text" autocomplete="username" autocapitalize="none" required></div>
+  <div class="field"><label for="p">סיסמה</label><input id="p" name="password" type="password" autocomplete="current-password" required></div>
+  <button class="btn block">כניסה</button>
+</form>
+<%- include('../partials/foot', { shell: 'public' }) %>

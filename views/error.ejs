@@ -1,0 +1,7 @@
+<%- include('partials/head', { title, shell: 'public' }) %>
+<div class="hero">
+  <div class="big"><%= title %></div>
+  <% if (message) { %><p class="muted"><%= message %></p><% } %>
+  <p><a href="/">חזרה</a></p>
+</div>
+<%- include('partials/foot', { shell: 'public' }) %>

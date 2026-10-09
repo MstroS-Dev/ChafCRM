@@ -1,0 +1,17 @@
+<%- include('../partials/head', { title: 'האירועים שלי', shell: 'crew' }) %>
+<div class="hero">
+  <div class="big">היי <%= crew.name.split(' ')[0] %> 👋</div>
+  <p class="muted">האירועים הקרובים שלך</p>
+</div>
+<% if (!items.length) { %><div class="card empty">אין כרגע אירועים קרובים</div><% } %>
+<% items.forEach(function (e) { const d = e.date.split('-'); %>
+<a class="card row-link" href="/c/<%= crew.token %>/a/<%= e.assignment_id %>" style="display:flex">
+  <div class="datebox"><b><%= d[2] %></b><span><%= d[1] %>/<%= d[0].slice(2) %></span></div>
+  <div class="row-main">
+    <div class="row-title"><%= e.name %></div>
+    <div class="row-sub"><%= e.venue || '' %><%= e.arrival_time ? ' · הגעה ' + e.arrival_time : '' %></div>
+  </div>
+  <span class="badge b-<%= e.confirm_status %>"><%= L.confirmStatus[e.confirm_status] %></span>
+</a>
+<% }) %>
+<%- include('../partials/foot', { shell: 'crew' }) %>

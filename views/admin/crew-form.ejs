@@ -1,0 +1,25 @@
+<%- include('../partials/head', { title: c.id ? 'עריכה' : 'הוספה למאגר' }) %>
+<div class="crumbs"><a href="/admin/crew">צוות וספקים</a><% if (c.id) { %> / <a href="/admin/crew/<%= c.id %>"><%= c.name %></a><% } %></div>
+<h1><%= c.id ? 'עריכת ' + c.name : 'הוספה למאגר' %></h1>
+<form method="post" action="<%= c.id ? '/admin/crew/' + c.id : '/admin/crew' %>" class="card">
+  <div class="fields two">
+    <div class="field"><label for="name">שם מלא</label><input id="name" name="name" type="text" required value="<%= c.name || '' %>"></div>
+    <div class="field"><label for="kind">סוג</label>
+      <select id="kind" name="kind"><% Object.keys(L.crewKind).forEach(function (k) { %><option value="<%= k %>" <%= c.kind === k ? 'selected' : '' %>><%= L.crewKind[k] %></option><% }) %></select></div>
+    <div class="field"><label for="role">תפקיד קבוע</label><input id="role" name="role" type="text" list="instruments" value="<%= c.role || '' %>" placeholder="גיטרה / טכנאי סאונד / ספק הגברה / DJ"></div>
+    <div class="field"><label for="default_price">מחיר ברירת מחדל לאירוע (₪)</label><input id="default_price" name="default_price" type="number" min="0" value="<%= c.default_price ?? '' %>"></div>
+    <div class="field"><label for="phone">טלפון (WhatsApp)</label><input id="phone" name="phone" type="tel" value="<%= c.phone || '' %>" placeholder="050-0000000"></div>
+    <div class="field"><label for="email">דוא״ל</label><input id="email" name="email" type="email" value="<%= c.email || '' %>"></div>
+  </div>
+  <div class="field"><label for="notes">הערות <span class="tiny">— מנהל בלבד</span></label><textarea id="notes" name="notes"><%= c.notes || '' %></textarea></div>
+  <% if (c.id) { %>
+  <div class="field"><label for="active">מצב</label>
+    <select id="active" name="active"><option value="1" <%= c.active ? 'selected' : '' %>>פעיל</option><option value="0" <%= c.active ? '' : 'selected' %>>לא פעיל (הקישור האישי מושבת)</option></select></div>
+  <% } %>
+  <datalist id="instruments"><% L.instruments.forEach(function (i) { %><option value="<%= i %>"><% }) %></datalist>
+  <div class="btns">
+    <button class="btn"><%= c.id ? 'שמור' : 'הוסף' %></button>
+    <a class="btn secondary" href="<%= c.id ? '/admin/crew/' + c.id : '/admin/crew' %>">ביטול</a>
+  </div>
+</form>
+<%- include('../partials/foot') %>

@@ -1,0 +1,34 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      TZ: Asia/Jerusalem
+    volumes:
+      - ./data:/app/data
+    ports:
+      # Without a domain: the app is reachable on http://<server-ip>:3000
+      # With the HTTPS profile below you can change this to "127.0.0.1:3000:3000"
+      - "${APP_PORT:-3000}:3000"
+
+  # Automatic HTTPS (Let's Encrypt). Needs a domain pointing at the server and ports 80/443 open.
+  # Start with:  docker compose --profile https up -d
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    profiles: ["https"]
+    depends_on: [app]
+    environment:
+      DOMAIN: ${DOMAIN:-}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

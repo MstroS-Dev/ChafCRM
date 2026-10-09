@@ -1,0 +1,49 @@
+name: Test & deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    # Runs only on main, and only once the EC2_HOST secret has been added to the repo
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      HAS_HOST: ${{ secrets.EC2_HOST != '' }}
+    steps:
+      - name: Skip (no EC2 secrets yet)
+        if: env.HAS_HOST != 'true'
+        run: echo "Add EC2_HOST, EC2_USER and EC2_SSH_KEY repository secrets to enable auto-deploy."
+      - name: Deploy over SSH
+        if: env.HAS_HOST == 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/ChafCRM
+            git fetch --quiet origin main
+            git reset --hard origin/main
+            if grep -qE '^DOMAIN=.+' .env; then PROFILE="--profile https"; else PROFILE=""; fi
+            (docker info >/dev/null 2>&1 && D=docker) || D="sudo docker"
+            $D compose $PROFILE up -d --build
+            $D image prune -f >/dev/null
+            sleep 5
+            $D compose ps

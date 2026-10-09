@@ -1,0 +1,59 @@
+<%- include('../partials/head', { title: ev.name, shell: 'crew' }) %>
+<div class="crumbs"><a href="/c/<%= crew.token %>">← כל האירועים שלי</a></div>
+<h1><%= ev.name %></h1>
+<p class="muted"><%= u.fmtDateLong(ev.date) %><%= a.position ? ' · ' + a.position : '' %></p>
+
+<% if (ev.status === 'cancelled') { %>
+  <div class="status-banner declined">האירוע בוטל</div>
+<% } else if (done === 'confirmed' || a.confirm_status === 'confirmed') { %>
+  <div class="status-banner confirmed">✅ ההגעה אושרה — תודה!</div>
+<% } else if (done === 'declined' || a.confirm_status === 'declined') { %>
+  <div class="status-banner declined">סימנת שאינך זמין/ה לאירוע הזה</div>
+<% } else { %>
+  <div class="status-banner pending">נא לאשר הגעה</div>
+<% } %>
+
+<% if (ev.status !== 'cancelled') { %>
+<form method="post" action="/c/<%= crew.token %>/a/<%= a.id %>/respond" class="answer" style="margin-bottom:1rem">
+  <button class="btn big ok" name="answer" value="confirmed" <%= a.confirm_status === 'confirmed' ? 'disabled' : '' %>>✅ מאשר/ת</button>
+  <button class="btn big danger" name="answer" value="declined" <%= a.confirm_status === 'declined' ? 'disabled' : '' %>>❌ לא מאשר/ת</button>
+</form>
+<% } %>
+
+<section class="card">
+  <h2>איפה ומתי</h2>
+  <dl class="kv">
+    <dt>מיקום</dt><dd><%= ev.venue || '—' %><% if (ev.address) { %><div class="small muted"><%= ev.address %></div><% } %></dd>
+    <% if (ev.arrival_time) { %><dt>הגעה</dt><dd><%= ev.arrival_time %></dd><% } %>
+    <% if (ev.soundcheck_time) { %><dt>סאונד-צ׳ק</dt><dd><%= ev.soundcheck_time %></dd><% } %>
+    <% if (ev.reception_time) { %><dt>קבלת פנים</dt><dd><%= ev.reception_time %></dd><% } %>
+  </dl>
+  <% if (ev.waze) { %><a class="btn accent block" style="margin-top:1rem" href="<%= ev.waze %>" target="_blank" rel="noopener">🚗 ניווט ב-Waze</a><% } %>
+</section>
+
+<% if (ev.timeline.length) { %>
+<section class="card">
+  <h2>לו״ז</h2>
+  <ul class="timeline">
+    <% ev.timeline.forEach(function (t) { %><li><span class="t"><%= t.time || '' %></span><span class="l"><%= t.label %></span></li><% }) %>
+  </ul>
+</section>
+<% } %>
+
+<% if (ev.crew_notes) { %>
+<section class="card"><h2>דגשים</h2><div class="pre"><%= ev.crew_notes %></div></section>
+<% } %>
+
+<% if (ev.tech_requirements) { %>
+<section class="card"><h2>דרישות טכניות</h2><div class="pre"><%= ev.tech_requirements %></div></section>
+<% } %>
+
+<% if (team.length) { %>
+<section class="card">
+  <h2>מי מגיע</h2>
+  <ul class="list">
+    <% team.forEach(function (t) { %><li style="padding:.4rem 0"><%= t.name %><span class="muted small"><%= t.position ? ' · ' + t.position : '' %></span></li><% }) %>
+  </ul>
+</section>
+<% } %>
+<%- include('../partials/foot', { shell: 'crew' }) %>

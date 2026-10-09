@@ -1,0 +1,56 @@
+<%- include('../partials/head', { title: ev.id ? 'עריכת אירוע' : 'אירוע חדש' }) %>
+<div class="crumbs"><a href="/admin/events">אירועים</a><% if (ev.id) { %> / <a href="/admin/events/<%= ev.id %>"><%= ev.name %></a><% } %></div>
+<h1><%= ev.id ? 'עריכת אירוע' : 'אירוע חדש' %></h1>
+
+<form method="post" action="<%= ev.id ? '/admin/events/' + ev.id : '/admin/events' %>">
+  <section class="card">
+    <h2>פרטי האירוע</h2>
+    <div class="fields two">
+      <div class="field"><label for="name">שם האירוע</label><input id="name" name="name" type="text" required value="<%= ev.name || '' %>" placeholder="חתונה – דנה ויוסי"></div>
+      <div class="field"><label for="client_name">לקוח</label><input id="client_name" name="client_name" type="text" value="<%= ev.client_name || '' %>"></div>
+    </div>
+    <div class="fields three">
+      <div class="field"><label for="event_type">סוג אירוע</label>
+        <select id="event_type" name="event_type">
+          <option value=""></option>
+          <% L.eventTypes.forEach(function (t) { %><option <%= ev.event_type === t ? 'selected' : '' %>><%= t %></option><% }) %>
+        </select></div>
+      <div class="field"><label for="date">תאריך</label><input id="date" name="date" type="date" required value="<%= ev.date || '' %>"></div>
+      <div class="field"><label for="status">סטטוס</label>
+        <select id="status" name="status">
+          <% Object.keys(L.eventStatus).forEach(function (k) { %><option value="<%= k %>" <%= ev.status === k ? 'selected' : '' %>><%= L.eventStatus[k] %></option><% }) %>
+        </select></div>
+    </div>
+    <div class="fields two">
+      <div class="field"><label for="venue">מיקום / אולם</label><input id="venue" name="venue" type="text" value="<%= ev.venue || '' %>"></div>
+      <div class="field"><label for="address">כתובת (לניווט Waze)</label><input id="address" name="address" type="text" value="<%= ev.address || '' %>"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>שעות</h2>
+    <div class="fields three">
+      <div class="field"><label for="arrival_time">שעת הגעה</label><input id="arrival_time" name="arrival_time" type="time" value="<%= ev.arrival_time || '' %>"></div>
+      <div class="field"><label for="soundcheck_time">סאונד-צ׳ק</label><input id="soundcheck_time" name="soundcheck_time" type="time" value="<%= ev.soundcheck_time || '' %>"></div>
+      <div class="field"><label for="reception_time">קבלת פנים</label><input id="reception_time" name="reception_time" type="time" value="<%= ev.reception_time || '' %>"></div>
+    </div>
+    <p class="hint">התזכורת האוטומטית לצוות נשלחת 24 שעות לפני הסאונד-צ׳ק. את הלו״ז המלא (חופה, סטים) עורכים בעמוד האירוע.</p>
+  </section>
+
+  <section class="card">
+    <h2>הפקה</h2>
+    <div class="fields two">
+      <div class="field"><label for="musicians_count">מספר נגנים</label><input id="musicians_count" name="musicians_count" type="number" min="0" value="<%= ev.musicians_count ?? '' %>"></div>
+      <div class="field"><label for="price">מחיר ללקוח (₪) <span class="tiny">— מנהל בלבד</span></label><input id="price" name="price" type="number" min="0" value="<%= ev.price ?? '' %>"></div>
+    </div>
+    <div class="field"><label for="crew_notes">דגשים לצוות <span class="tiny">— גלוי לכל המשובצים</span></label><textarea id="crew_notes" name="crew_notes" placeholder="קוד לבוש, חניה, כניסת ספקים..."><%= ev.crew_notes || '' %></textarea></div>
+    <div class="field"><label for="tech_requirements">דרישות טכניות <span class="tiny">— גלוי לספקים ולצוות הטכני</span></label><textarea id="tech_requirements" name="tech_requirements" placeholder="מערכת הגברה, מוניטורים, חיבורי חשמל..."><%= ev.tech_requirements || '' %></textarea></div>
+    <div class="field"><label for="internal_notes">הערות פנימיות <span class="tiny">— מנהל בלבד</span></label><textarea id="internal_notes" name="internal_notes"><%= ev.internal_notes || '' %></textarea></div>
+  </section>
+
+  <div class="btns">
+    <button class="btn" type="submit"><%= ev.id ? 'שמור' : 'צור אירוע' %></button>
+    <a class="btn secondary" href="<%= ev.id ? '/admin/events/' + ev.id : '/admin/events' %>">ביטול</a>
+  </div>
+</form>
+<%- include('../partials/foot') %>

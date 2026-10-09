@@ -1,0 +1,60 @@
+<%- include('../partials/head', { title: 'ראשי' }) %>
+<div class="page-head">
+  <h1>שלום <%= manager.name %> 👋</h1>
+  <div class="btns">
+    <a class="btn accent sm" href="/admin/events/new">+ אירוע</a>
+    <a class="btn secondary sm" href="/admin/leads/new">+ ליד</a>
+  </div>
+</div>
+
+<div class="stats">
+  <a class="stat" href="/admin/leads"><b><%= pendingLeads %></b><span>לידים ממתינים לאישור</span></a>
+  <a class="stat" href="/admin/clients"><b><%= (pipeline.new_lead || 0) + (pipeline.quote_sent || 0) + (pipeline.negotiation || 0) %></b><span>לקוחות בטיפול</span></a>
+  <a class="stat" href="/admin/events"><b><%= upcoming.length %></b><span>אירועים קרובים</span></a>
+  <a class="stat" href="/admin/payments"><b><%= u.money(owed) || '₪0' %></b><span>יתרה לתשלום לספקים</span></a>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>אירועים קרובים</h2><a href="/admin/events" class="small">הכל</a></div>
+    <% if (!upcoming.length) { %><div class="empty">אין אירועים קרובים</div><% } %>
+    <ul class="list">
+      <% upcoming.forEach(function (e) { const d = e.date.split('-'); %>
+      <li><a class="row-link" href="/admin/events/<%= e.id %>">
+        <div class="datebox"><b><%= d[2] %></b><span><%= d[1] %>/<%= d[0].slice(2) %></span></div>
+        <div class="row-main">
+          <div class="row-title"><%= e.name %></div>
+          <div class="row-sub"><%= e.venue || '—' %><%= e.soundcheck_time ? ' · סאונד ' + e.soundcheck_time : '' %></div>
+        </div>
+        <div class="row-side">
+          <% if (e.crew_total) { %>
+            <span class="badge <%= e.crew_pending || e.crew_declined ? 'b-warn' : 'b-ok' %>"><%= e.crew_ok %>/<%= e.crew_total %> אישרו</span>
+          <% } else { %><span class="badge b-bad">אין צוות</span><% } %>
+        </div>
+      </a></li>
+      <% }) %>
+    </ul>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>לידים חדשים</h2><a href="/admin/leads" class="small">הכל</a></div>
+    <% if (!newLeads.length) { %><div class="empty">אין לידים שממתינים לך 🎉</div><% } %>
+    <ul class="list">
+      <% newLeads.forEach(function (l) { %>
+      <li>
+        <div class="row-link" style="align-items:flex-start">
+          <a class="row-main" href="/admin/leads/<%= l.id %>" style="color:inherit">
+            <div class="row-title"><%= l.name || l.phone %></div>
+            <div class="row-sub"><%= l.event_type || 'אירוע' %> · <%= u.fmtDate(l.requested_date) || 'ללא תאריך' %> · <%= L.leadSource[l.source] || l.source %></div>
+          </a>
+          <div class="btns">
+            <form method="post" action="/admin/leads/<%= l.id %>/approve"><button class="btn ok sm" title="צור כרטיס לקוח">✓</button></form>
+            <form method="post" action="/admin/leads/<%= l.id %>/reject"><button class="btn danger sm" title="לא רלוונטי">✕</button></form>
+          </div>
+        </div>
+      </li>
+      <% }) %>
+    </ul>
+  </section>
+</div>
+<%- include('../partials/foot') %>

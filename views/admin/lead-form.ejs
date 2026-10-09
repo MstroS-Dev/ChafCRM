@@ -1,0 +1,19 @@
+<%- include('../partials/head', { title: 'ליד חדש' }) %>
+<div class="crumbs"><a href="/admin/leads">לידים</a></div>
+<h1>הזנת ליד ידנית</h1>
+<form method="post" action="/admin/leads" class="card">
+  <div class="fields two">
+    <div class="field"><label>שם</label><input type="text" name="name" required></div>
+    <div class="field"><label>טלפון</label><input type="tel" name="phone"></div>
+    <div class="field"><label>תאריך מבוקש</label><input type="date" name="requested_date"></div>
+    <div class="field"><label>סוג אירוע</label>
+      <select name="event_type"><option value=""></option><% L.eventTypes.forEach(function (t) { %><option><%= t %></option><% }) %></select></div>
+    <div class="field"><label>מיקום משוער</label><input type="text" name="location"></div>
+    <div class="field"><label>מקור</label>
+      <select name="source"><% ['manual','phone','instagram','facebook','whatsapp','form'].forEach(function (k) { %><option value="<%= k %>"><%= L.leadSource[k] %></option><% }) %></select></div>
+  </div>
+  <div class="field"><label>הערות</label><textarea name="notes"></textarea></div>
+  <label class="check" style="margin-bottom:1rem"><input type="checkbox" name="notify" value="1"> שלח לי גם התראת אישור/דחייה</label>
+  <button class="btn">קלוט ליד</button>
+</form>
+<%- include('../partials/foot') %>

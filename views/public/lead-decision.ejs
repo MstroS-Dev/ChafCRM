@@ -1,0 +1,25 @@
+<%- include('../partials/head', { title: 'ליד חדש', shell: 'public' }) %>
+<div class="hero"><div class="big">📩 <%= lead.name || lead.phone %></div></div>
+<section class="card">
+  <dl class="kv">
+    <dt>טלפון</dt><dd><% if (lead.phone) { %><a class="ltr" href="tel:<%= lead.phone %>"><%= lead.phone %></a><% } else { %>—<% } %></dd>
+    <dt>תאריך מבוקש</dt><dd><%= u.fmtDate(lead.requested_date) || lead.requested_date || '—' %></dd>
+    <dt>סוג אירוע</dt><dd><%= lead.event_type || '—' %></dd>
+    <dt>מיקום</dt><dd><%= lead.location || '—' %></dd>
+    <dt>מקור</dt><dd><%= L.leadSource[lead.source] || lead.source %></dd>
+  </dl>
+  <% if (lead.notes) { %><p class="pre small" style="margin-top:.75rem"><%= lead.notes %></p><% } %>
+</section>
+<% if (result === 'approved' || (lead.status === 'approved' && !result)) { %>
+  <div class="status-banner confirmed">✅ נוצר כרטיס לקוח</div>
+  <a class="btn block" href="/admin/clients/<%= lead.client_id || '' %>">פתח את הכרטיס</a>
+<% } else if (result === 'rejected' || lead.status === 'rejected') { %>
+  <div class="status-banner declined">🚫 סומן כלא רלוונטי</div>
+<% } else { %>
+  <p style="text-align:center;font-weight:700">האם ליצור כרטיס לקוח?</p>
+  <form method="post" action="/l/<%= lead.id %>/<%= sig %>" class="answer">
+    <button class="btn big ok" name="action" value="approve">✅ צור כרטיס לקוח</button>
+    <button class="btn big danger" name="action" value="reject">🚫 לא רלוונטי</button>
+  </form>
+<% } %>
+<%- include('../partials/foot', { shell: 'public' }) %>

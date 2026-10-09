@@ -1,0 +1,84 @@
+<%- include('../partials/head', { title: client.name }) %>
+<div class="crumbs"><a href="/admin/clients">לקוחות</a></div>
+<div class="page-head">
+  <div>
+    <h1><%= client.name %></h1>
+    <div class="muted"><%= client.event_type || 'אירוע' %> · <%= u.fmtDate(client.requested_date) || 'ללא תאריך' %></div>
+  </div>
+  <div class="btns">
+    <% if (client.phone) { %>
+      <a class="btn secondary sm" href="tel:<%= client.phone %>">📞 חיוג</a>
+      <a class="btn secondary sm" href="https://wa.me/<%= client.phone.replace(/\D/g,'').replace(/^0/, '972') %>" target="_blank" rel="noopener">WhatsApp</a>
+    <% } %>
+  </div>
+</div>
+
+<section class="card">
+  <h2>סטטוס לקוח</h2>
+  <div class="pipeline">
+    <% Object.keys(L.clientStatus).forEach(function (k) { %>
+    <form method="post" action="/admin/clients/<%= client.id %>/status"><button name="status" value="<%= k %>" class="<%= client.status === k ? 'on' : '' %> <%= k %>"><%= L.clientStatus[k] %></button></form>
+    <% }) %>
+  </div>
+  <div style="margin-top:1rem">
+    <% if (ev) { %>
+      <a class="btn ok block" href="/admin/events/<%= ev.id %>">🎤 לאירוע במערכת ההפקה: <%= ev.name %></a>
+    <% } else { %>
+      <form method="post" action="/admin/clients/<%= client.id %>/convert">
+        <button class="btn accent block" data-confirm="לסגור את העסקה ולפתוח אירוע חדש במערכת ההפקה?">🤝 העסקה נסגרה — צור אירוע במערכת ההפקה</button>
+      </form>
+    <% } %>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card" id="history">
+    <h2>היסטוריית התקשרות</h2>
+    <form method="post" action="/admin/clients/<%= client.id %>/interactions" style="margin-bottom:1rem">
+      <div class="fields two">
+        <div class="field"><label>סוג</label>
+          <select name="kind"><% ['call','note','quote','whatsapp','meeting'].forEach(function (k) { %><option value="<%= k %>"><%= L.interactionKind[k] %></option><% }) %></select></div>
+        <div class="field"><label>סכום (להצעת מחיר)</label><input type="number" name="amount" min="0"></div>
+      </div>
+      <div class="field"><label>סיכום</label><textarea name="summary" placeholder="מה דובר, מה סוכם, צעד הבא..."></textarea></div>
+      <button class="btn sm">+ הוסף</button>
+    </form>
+    <% if (!history.length) { %><div class="empty">אין עדיין רישומים</div><% } %>
+    <ul class="history">
+      <% history.forEach(function (h) { %>
+      <li>
+        <div class="meta">
+          <span class="badge <%= h.kind === 'quote' ? 'b-info' : '' %>"><%= L.interactionKind[h.kind] %></span>
+          <span><%= u.fmtDate(h.created_at.slice(0,10)) %> <%= h.created_at.slice(11,16) %> UTC</span>
+          <% if (h.kind !== 'system') { %>
+          <form method="post" action="/admin/clients/<%= client.id %>/interactions/<%= h.id %>/delete" class="inline"><button class="link tiny" data-confirm="למחוק את הרישום?">מחק</button></form>
+          <% } %>
+        </div>
+        <% if (h.amount) { %><b><%= u.money(h.amount) %></b><% } %>
+        <% if (h.summary) { %><div class="pre"><%= h.summary %></div><% } %>
+      </li>
+      <% }) %>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>פרטי לקוח</h2>
+    <form method="post" action="/admin/clients/<%= client.id %>">
+      <div class="fields two">
+        <div class="field"><label>שם</label><input type="text" name="name" value="<%= client.name %>" required></div>
+        <div class="field"><label>טלפון</label><input type="tel" name="phone" value="<%= client.phone || '' %>"></div>
+        <div class="field"><label>דוא״ל</label><input type="email" name="email" value="<%= client.email || '' %>"></div>
+        <div class="field"><label>תאריך מבוקש</label><input type="date" name="requested_date" value="<%= /^\d{4}-\d{2}-\d{2}$/.test(client.requested_date || '') ? client.requested_date : '' %>"></div>
+        <div class="field"><label>סוג אירוע</label>
+          <select name="event_type"><option value=""></option><% L.eventTypes.forEach(function (t) { %><option <%= client.event_type === t ? 'selected' : '' %>><%= t %></option><% }) %>
+          <% if (client.event_type && !L.eventTypes.includes(client.event_type)) { %><option selected><%= client.event_type %></option><% } %></select></div>
+        <div class="field"><label>מיקום</label><input type="text" name="location" value="<%= client.location || '' %>"></div>
+      </div>
+      <input type="hidden" name="status" value="<%= client.status %>">
+      <div class="field"><label>הערות</label><textarea name="notes"><%= client.notes || '' %></textarea></div>
+      <button class="btn sm">שמור</button>
+    </form>
+    <% if (lead) { %><p class="tiny" style="margin-top:.75rem">נוצר מליד #<%= lead.id %> (<%= L.leadSource[lead.source] || lead.source %>) · <%= lead.created_at %> UTC</p><% } %>
+  </section>
+</div>
+<%- include('../partials/foot') %>

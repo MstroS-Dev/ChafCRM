@@ -1,0 +1,25 @@
+<%- include('../partials/head', { title: 'הודעות' }) %>
+<div class="page-head">
+  <h1>יומן הודעות</h1>
+  <form method="post" action="/admin/automations/run"><button class="btn secondary sm">הרץ בדיקת תזכורות עכשיו</button></form>
+</div>
+<p class="small muted">כל ההודעות שהמערכת שלחה או קיבלה. סטטוס ״נרשם ביומן״ = עדיין לא חובר ספק WhatsApp, ההודעה לא נשלחה בפועל.</p>
+<section class="card">
+  <% if (!list.length) { %><div class="empty">עדיין לא נשלחו הודעות</div><% } %>
+  <ul class="history">
+    <% const st = { sent: ['b-ok','נשלח'], logged: ['b-info','נרשם ביומן'], failed: ['b-bad','נכשל'], received: ['b-warn','התקבל'] }; %>
+    <% list.forEach(function (m) { %>
+    <li>
+      <div class="meta">
+        <span class="badge <%= (st[m.status]||[])[0] %>"><%= (st[m.status]||[])[1] || m.status %></span>
+        <span><%= m.channel %></span>
+        <span class="ltr"><%= m.recipient %></span>
+        <span><%= m.created_at %> UTC</span>
+      </div>
+      <% if (m.error) { %><div class="small" style="color:var(--bad)"><%= m.error %></div><% } %>
+      <div class="msg-body"><%= m.body %></div>
+    </li>
+    <% }) %>
+  </ul>
+</section>
+<%- include('../partials/foot') %>

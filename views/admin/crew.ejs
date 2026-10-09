@@ -1,0 +1,31 @@
+<%- include('../partials/head', { title: 'צוות וספקים' }) %>
+<div class="page-head">
+  <h1>צוות וספקים</h1>
+  <div class="btns">
+    <a class="btn secondary sm" href="/admin/payments">תשלומים</a>
+    <a class="btn accent" href="/admin/crew/new<%= kind ? '?kind=' + kind : '' %>">+ הוספה</a>
+  </div>
+</div>
+<div class="chips">
+  <a href="/admin/crew" class="<%= !kind ? 'on' : '' %>">הכל</a>
+  <% Object.keys(L.crewKind).forEach(function (k) { %><a href="/admin/crew?kind=<%= k %>" class="<%= kind === k ? 'on' : '' %>"><%= L.crewKind[k] %></a><% }) %>
+</div>
+<section class="card">
+  <% if (!crew.length) { %><div class="empty">המאגר ריק. התחל בהוספת הנגנים והספקים שאתה עובד איתם.</div><% } %>
+  <ul class="list">
+    <% crew.forEach(function (c) { %>
+    <li><a class="row-link" href="/admin/crew/<%= c.id %>" style="<%= c.active ? '' : 'opacity:.5' %>">
+      <div class="row-main">
+        <div class="row-title"><%= c.name %></div>
+        <div class="row-sub"><%= c.role || L.crewKind[c.kind] %> · <span class="ltr"><%= c.phone || '—' %></span></div>
+      </div>
+      <div class="row-side">
+        <% if (!c.active) { %><span class="badge">לא פעיל</span><% } %>
+        <% if (c.upcoming) { %><div class="tiny"><%= c.upcoming %> אירועים קרובים</div><% } %>
+        <% if (c.owed > 0) { %><div class="tiny" style="color:var(--warn)">יתרה <%= u.money(c.owed) %></div><% } %>
+      </div>
+    </a></li>
+    <% }) %>
+  </ul>
+</section>
+<%- include('../partials/foot') %>

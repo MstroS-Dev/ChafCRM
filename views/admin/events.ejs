@@ -1,0 +1,29 @@
+<%- include('../partials/head', { title: 'אירועים' }) %>
+<div class="page-head">
+  <h1>אירועים</h1>
+  <a class="btn accent" href="/admin/events/new">+ אירוע חדש</a>
+</div>
+<div class="chips">
+  <a href="/admin/events" class="<%= view === 'upcoming' ? 'on' : '' %>">קרובים</a>
+  <a href="/admin/events?view=past" class="<%= view === 'past' ? 'on' : '' %>">עברו</a>
+  <a href="/admin/events?view=all" class="<%= view === 'all' ? 'on' : '' %>">הכל</a>
+</div>
+<section class="card">
+  <% if (!events.length) { %><div class="empty">אין אירועים להצגה</div><% } %>
+  <ul class="list">
+    <% events.forEach(function (e) { const d = e.date.split('-'); %>
+    <li><a class="row-link" href="/admin/events/<%= e.id %>">
+      <div class="datebox"><b><%= d[2] %></b><span><%= d[1] %>/<%= d[0].slice(2) %></span></div>
+      <div class="row-main">
+        <div class="row-title"><%= e.name %></div>
+        <div class="row-sub"><%= e.event_type || '' %><%= e.venue ? ' · ' + e.venue : '' %></div>
+      </div>
+      <div class="row-side">
+        <span class="badge b-<%= e.status %>"><%= L.eventStatus[e.status] %></span>
+        <div class="tiny"><%= e.crew_ok %>/<%= e.crew_total %> אישרו</div>
+      </div>
+    </a></li>
+    <% }) %>
+  </ul>
+</section>
+<%- include('../partials/foot') %>

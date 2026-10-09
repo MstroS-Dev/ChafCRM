@@ -1,0 +1,26 @@
+</main>
+<% const shellModeF = typeof shell !== 'undefined' ? shell : (manager ? 'admin' : 'public'); %>
+<% if (shellModeF === 'admin') { %>
+<nav class="tabbar">
+  <a href="/admin" class="<%= path === '/admin' || path === '/admin/' ? 'on' : '' %>"><span class="ic">🏠</span>ראשי</a>
+  <a href="/admin/events" class="<%= path.startsWith('/admin/events') ? 'on' : '' %>"><span class="ic">🎤</span>אירועים</a>
+  <a href="/admin/leads" class="<%= path.startsWith('/admin/leads') ? 'on' : '' %>"><span class="ic">📩</span>לידים<% if (pendingLeads) { %><span class="dot"><%= pendingLeads %></span><% } %></a>
+  <a href="/admin/clients" class="<%= path.startsWith('/admin/clients') ? 'on' : '' %>"><span class="ic">🤝</span>לקוחות</a>
+  <a href="/admin/crew" class="<%= path.startsWith('/admin/crew') || path.startsWith('/admin/payments') ? 'on' : '' %>"><span class="ic">🎸</span>צוות</a>
+</nav>
+<% } %>
+<script>
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-confirm]');
+  if (b && !confirm(b.getAttribute('data-confirm'))) e.preventDefault();
+  var c = e.target.closest('[data-copy]');
+  if (c) {
+    var input = document.getElementById(c.getAttribute('data-copy'));
+    input.select();
+    (navigator.clipboard ? navigator.clipboard.writeText(input.value) : Promise.resolve(document.execCommand('copy')))
+      .then(function () { c.textContent = 'הועתק ✓'; setTimeout(function () { c.textContent = 'העתק'; }, 1500); });
+  }
+});
+</script>
+</body>
+</html>

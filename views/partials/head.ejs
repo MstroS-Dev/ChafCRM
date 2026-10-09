@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b2350">
+<meta name="robots" content="noindex">
+<title><%= typeof title !== 'undefined' && title ? title + ' · ' : '' %><%= brand %></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css?v=1">
+</head>
+<body>
+<% const shellMode = typeof shell !== 'undefined' ? shell : (manager ? 'admin' : 'public'); %>
+<% if (shellMode === 'admin') { %>
+<header class="topbar">
+  <a class="logo" href="/admin"><%= brand %></a>
+  <nav class="topnav">
+    <a href="/admin" class="<%= path === '/admin' || path === '/admin/' ? 'on' : '' %>">ראשי</a>
+    <a href="/admin/events" class="<%= path.startsWith('/admin/events') ? 'on' : '' %>">אירועים</a>
+    <a href="/admin/leads" class="<%= path.startsWith('/admin/leads') ? 'on' : '' %>">לידים<%= pendingLeads ? ` (${pendingLeads})` : '' %></a>
+    <a href="/admin/clients" class="<%= path.startsWith('/admin/clients') ? 'on' : '' %>">לקוחות</a>
+    <a href="/admin/crew" class="<%= path.startsWith('/admin/crew') ? 'on' : '' %>">צוות וספקים</a>
+    <a href="/admin/payments" class="<%= path.startsWith('/admin/payments') ? 'on' : '' %>">תשלומים</a>
+    <a href="/admin/messages" class="<%= path.startsWith('/admin/messages') ? 'on' : '' %>">הודעות</a>
+  </nav>
+  <span class="spacer"></span>
+  <form method="post" action="/logout" class="inline"><button class="link" type="submit">יציאה</button></form>
+</header>
+<% } else if (shellMode === 'crew') { %>
+<header class="topbar">
+  <a class="logo" href="/c/<%= crew.token %>"><%= brand %></a>
+  <span class="spacer"></span>
+  <span class="small"><%= crew.name %></span>
+</header>
+<% } %>
+<main class="<%= shellMode === 'admin' ? '' : 'narrow public' %>">
+<% if (msg) { %><div class="flash"><%= msg %></div><% } %>

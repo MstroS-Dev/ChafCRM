@@ -1,0 +1,31 @@
+<%- include('../partials/head', { title: 'ליד' }) %>
+<div class="crumbs"><a href="/admin/leads">לידים</a></div>
+<div class="page-head">
+  <h1><%= lead.name || lead.phone || 'ליד' %></h1>
+  <span class="badge b-<%= lead.status %>"><%= L.leadStatus[lead.status] %></span>
+</div>
+<section class="card">
+  <dl class="kv">
+    <dt>טלפון</dt><dd><% if (lead.phone) { %><a class="ltr" href="tel:<%= lead.phone %>"><%= lead.phone %></a><% } else { %>—<% } %></dd>
+    <% if (lead.email) { %><dt>דוא״ל</dt><dd><%= lead.email %></dd><% } %>
+    <dt>תאריך מבוקש</dt><dd><%= u.fmtDate(lead.requested_date) || lead.requested_date || '—' %></dd>
+    <dt>סוג אירוע</dt><dd><%= lead.event_type || '—' %></dd>
+    <dt>מיקום</dt><dd><%= lead.location || '—' %></dd>
+    <dt>מקור</dt><dd><%= L.leadSource[lead.source] || lead.source %></dd>
+    <dt>נקלט</dt><dd><%= lead.created_at %> UTC</dd>
+    <dt>התראה למנהל</dt><dd><%= lead.manager_notified_at ? 'נשלחה' : 'לא נשלחה' %></dd>
+  </dl>
+  <% if (lead.notes) { %><p class="pre" style="margin-top:.75rem"><%= lead.notes %></p><% } %>
+</section>
+<div class="btns">
+  <% if (lead.status === 'new') { %>
+    <form method="post" action="/admin/leads/<%= lead.id %>/approve"><button class="btn ok">✅ צור כרטיס לקוח</button></form>
+    <form method="post" action="/admin/leads/<%= lead.id %>/reject"><button class="btn danger">🚫 סמן כלא רלוונטי</button></form>
+    <form method="post" action="/admin/leads/<%= lead.id %>/renotify"><button class="btn secondary sm">שלח לי התראה שוב</button></form>
+  <% } else if (lead.status === 'approved') { %>
+    <a class="btn" href="/admin/clients/<%= lead.client_id %>">לכרטיס הלקוח</a>
+  <% } else { %>
+    <form method="post" action="/admin/leads/<%= lead.id %>/reopen"><button class="btn secondary">החזר לממתינים</button></form>
+  <% } %>
+</div>
+<%- include('../partials/foot') %>

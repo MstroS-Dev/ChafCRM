@@ -1,0 +1,27 @@
+<%- include('../partials/head', { title: 'תשלומי ספקים' }) %>
+<div class="crumbs"><a href="/admin/crew">צוות וספקים</a></div>
+<div class="page-head"><h1>תשלומים לנגנים וספקים</h1></div>
+<div class="chips">
+  <a href="/admin/payments" class="<%= all ? '' : 'on' %>">טרם שולם במלואו</a>
+  <a href="/admin/payments?all=1" class="<%= all ? 'on' : '' %>">הכל</a>
+</div>
+<section class="card">
+  <% if (!rows.length) { %><div class="empty">אין תשלומים פתוחים 👌</div><% } else {
+     const total = rows.reduce((s, r) => s + (r.agreed_price || 0) - (r.payment_status === 'paid' ? (r.agreed_price || 0) : (r.paid_amount || 0)), 0); %>
+  <p><b>יתרה פתוחה: <%= u.money(total) %></b></p>
+  <div class="scroll-x"><table class="simple">
+    <tr><th>תאריך</th><th>אירוע</th><th>שם</th><th>מחיר</th><th>שולם</th><th>סטטוס</th></tr>
+    <% rows.forEach(function (r) { %>
+    <tr>
+      <td class="nowrap"><%= u.fmtDate(r.date) %></td>
+      <td><a href="/admin/events/<%= r.event_id %>#crew"><%= r.event_name %></a></td>
+      <td><a href="/admin/crew/<%= r.crew_id %>"><%= r.name %></a></td>
+      <td class="nowrap"><%= u.money(r.agreed_price) || '—' %></td>
+      <td class="nowrap"><%= r.payment_status === 'paid' ? u.money(r.agreed_price) : (u.money(r.paid_amount) || '—') %></td>
+      <td><span class="badge b-<%= r.payment_status %>"><%= L.paymentStatus[r.payment_status] %></span></td>
+    </tr>
+    <% }) %>
+  </table></div>
+  <% } %>
+</section>
+<%- include('../partials/foot') %>

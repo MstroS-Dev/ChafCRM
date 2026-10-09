@@ -1,0 +1,30 @@
+<%- include('../partials/head', { title: 'לקוחות' }) %>
+<div class="page-head">
+  <h1>לקוחות</h1>
+  <form method="get" action="/admin/clients" style="flex:1;max-width:280px">
+    <% if (status) { %><input type="hidden" name="status" value="<%= status %>"><% } %>
+    <input type="search" name="q" value="<%= q || '' %>" placeholder="חיפוש שם / טלפון">
+  </form>
+</div>
+<div class="chips">
+  <a href="/admin/clients" class="<%= !status ? 'on' : '' %>">פעילים</a>
+  <% Object.keys(L.clientStatus).forEach(function (k) { %>
+  <a href="/admin/clients?status=<%= k %>" class="<%= status === k ? 'on' : '' %>"><%= L.clientStatus[k] %> (<%= counts[k] || 0 %>)</a>
+  <% }) %>
+</div>
+<section class="card">
+  <% if (!list.length) { %><div class="empty">אין לקוחות להצגה. לקוחות נוצרים כשמאשרים ליד.</div><% } %>
+  <ul class="list">
+    <% list.forEach(function (c) { %>
+    <li><a class="row-link" href="/admin/clients/<%= c.id %>">
+      <div class="row-main">
+        <div class="row-title"><%= c.name %></div>
+        <div class="row-sub"><%= c.event_type || 'אירוע' %> · <%= u.fmtDate(c.requested_date) || 'ללא תאריך' %> · <span class="ltr"><%= c.phone || '' %></span></div>
+      </div>
+      <div class="row-side"><span class="badge b-<%= c.status %>"><%= L.clientStatus[c.status] %></span>
+        <% if (c.last_touch) { %><div class="tiny">עדכון אחרון <%= u.fmtDate(c.last_touch.slice(0,10)) %></div><% } %></div>
+    </a></li>
+    <% }) %>
+  </ul>
+</section>
+<%- include('../partials/foot') %>
