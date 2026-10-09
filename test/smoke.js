@@ -197,11 +197,34 @@ function isoIn(hours) {
   assert.strictEqual(ev2.date, '2026-11-15'); assert.strictEqual(ev2.price, 18000); assert.strictEqual(ev2.client_id, clientId);
   ok('client card: quote → status pipeline → convert to production event');
 
+  // ── users: add a manager, log in as them, protections
+  r = await req('POST', '/admin/users', { form: { username: 'Producer', name: 'מנהל הפקה', password: 'short' } });
+  assert.strictEqual(r.status, 400, 'short password rejected');
+  r = await req('POST', '/admin/users', { form: { username: 'Producer', name: 'מנהל הפקה', password: 'producer-pass', phone: '050-9999999' } });
+  assert.strictEqual(r.status, 302);
+  const prod = db.prepare("SELECT * FROM managers WHERE username = 'producer'").get();
+  assert.ok(prod, 'username stored lowercase');
+  r = await req('POST', '/admin/users', { form: { username: 'producer', password: 'another-pass' } });
+  assert.strictEqual(r.status, 400, 'duplicate rejected');
+  const adminCookie = cookie;
+  r = await req('POST', '/login', { auth: false, form: { username: 'producer', password: 'producer-pass' } });
+  cookie = r.setCookie.split(';')[0];
+  r = await req('GET', '/admin'); assert.strictEqual(r.status, 200, 'new manager can log in');
+  r = await req('POST', `/admin/users/${prod.id}/delete`);
+  assert.ok(db.prepare('SELECT 1 FROM managers WHERE id = ?').get(prod.id), 'cannot delete yourself');
+  cookie = adminCookie;
+  r = await req('POST', `/admin/users/${prod.id}/password`, { form: { password: 'changed-pass' } });
+  r = await req('POST', '/login', { auth: false, form: { username: 'producer', password: 'changed-pass' } });
+  assert.strictEqual(r.status, 302, 'password change works');
+  r = await req('POST', `/admin/users/${prod.id}/delete`);
+  assert.ok(!db.prepare('SELECT 1 FROM managers WHERE id = ?').get(prod.id), 'admin can delete another user');
+  ok('users: add manager, login, change password, delete (not self)');
+
   // ── every admin page renders
   for (const p of ['/admin', '/admin/events', '/admin/events?view=all', `/admin/events/${ev.id}`, `/admin/events/${ev.id}/edit`, '/admin/events/new',
     '/admin/crew', `/admin/crew/${drummer.id}`, `/admin/crew/${drummer.id}/edit`, '/admin/crew/new', '/admin/payments', '/admin/payments?all=1',
     '/admin/leads', '/admin/leads?status=approved', '/admin/leads?status=rejected', '/admin/leads/new', `/admin/leads/${lead.id}`,
-    '/admin/clients', '/admin/clients?status=closed', `/admin/clients/${clientId}`, '/admin/messages']) {
+    '/admin/clients', '/admin/clients?status=closed', `/admin/clients/${clientId}`, '/admin/messages', '/admin/users']) {
     r = await req('GET', p);
     assert.strictEqual(r.status, 200, `${p} -> ${r.status}`);
   }

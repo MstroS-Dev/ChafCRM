@@ -1,0 +1,53 @@
+<%- include('../partials/head', { title: 'משתמשים' }) %>
+<div class="page-head"><h1>משתמשי מערכת</h1></div>
+<p class="small muted">למשתמשים כאן יש גישה מלאה: אירועים, לידים, לקוחות וכספים. מי שמוגדר לו טלפון מקבל גם את התראות ה-WhatsApp (לידים חדשים, אישורי הגעה חסרים). נגנים וספקים לא צריכים משתמש — הם נכנסים בקישור האישי שלהם.</p>
+<% if (error) { %><div class="flash err"><%= error %></div><% } %>
+
+<section class="card">
+  <ul class="list">
+    <% users.forEach(function (m) { %>
+    <li style="padding:.75rem 0">
+      <div class="assign-top">
+        <div>
+          <b><%= m.name %></b> <span class="muted small ltr"><%= m.username %></span>
+          <% if (m.id === manager.id) { %><span class="badge b-info">את/ה</span><% } %>
+          <div class="small muted"><span class="ltr"><%= m.phone || 'ללא טלפון — לא מקבל התראות' %></span></div>
+        </div>
+      </div>
+      <details class="more">
+        <summary>עריכה</summary>
+        <form method="post" action="/admin/users/<%= m.id %>">
+          <div class="fields two">
+            <div class="field"><label>שם</label><input type="text" name="name" value="<%= m.name %>"></div>
+            <div class="field"><label>טלפון להתראות</label><input type="tel" name="phone" value="<%= m.phone || '' %>"></div>
+          </div>
+          <button class="btn sm">שמור</button>
+        </form>
+        <form method="post" action="/admin/users/<%= m.id %>/password" style="margin-top:.75rem">
+          <div class="field"><label>סיסמה חדשה</label><input type="password" name="password" minlength="8" autocomplete="new-password" required></div>
+          <button class="btn secondary sm">עדכן סיסמה</button>
+        </form>
+        <% if (m.id !== manager.id) { %>
+        <form method="post" action="/admin/users/<%= m.id %>/delete" style="margin-top:.75rem">
+          <button class="btn danger sm" data-confirm="למחוק את המשתמש <%= m.username %>?">מחק משתמש</button>
+        </form>
+        <% } %>
+      </details>
+    </li>
+    <% }) %>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>הוספת משתמש</h2>
+  <form method="post" action="/admin/users">
+    <div class="fields two">
+      <div class="field"><label>שם</label><input type="text" name="name" value="<%= values.name || '' %>" placeholder="למשל: מנהל הפקה"></div>
+      <div class="field"><label>שם משתמש (באנגלית)</label><input type="text" name="username" value="<%= values.username || '' %>" autocapitalize="none" required style="direction:ltr;text-align:right"></div>
+      <div class="field"><label>סיסמה (לפחות 8 תווים)</label><input type="password" name="password" minlength="8" autocomplete="new-password" required></div>
+      <div class="field"><label>טלפון להתראות (לא חובה)</label><input type="tel" name="phone" value="<%= values.phone || '' %>"></div>
+    </div>
+    <button class="btn">הוסף משתמש</button>
+  </form>
+</section>
+<%- include('../partials/foot') %>

@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const { db, newToken, touch } = require('../db');
 const labels = require('../labels');
 const { requireManager } = require('../auth');
@@ -426,6 +427,52 @@ r.post('/clients/:id/interactions/:iid/delete', loadClient, (req, res) => {
 r.post('/clients/:id/convert', loadClient, (req, res) => {
   const eventId = leads.convertClientToEvent(req.client.id);
   back(res, `/admin/events/${eventId}`, 'נפתח אירוע חדש במערכת ההפקה — השלם את הפרטים');
+});
+
+// ───────────────────────── Users (managers)
+r.get('/users', (req, res) => {
+  const users = db.prepare('SELECT id, username, name, phone, created_at FROM managers ORDER BY id').all();
+  res.render('admin/users', { users, error: null, values: {} });
+});
+
+r.post('/users', (req, res) => {
+  const b = req.body;
+  const username = String(b.username || '').trim().toLowerCase();
+  const fail = (error) => res.status(400).render('admin/users', {
+    users: db.prepare('SELECT id, username, name, phone, created_at FROM managers ORDER BY id').all(), error, values: b,
+  });
+  if (!/^[a-z0-9._-]{3,32}$/.test(username)) return fail('שם משתמש: 3–32 תווים באנגלית, ספרות או . _ -');
+  if (String(b.password || '').length < 8) return fail('סיסמה: לפחות 8 תווים');
+  if (db.prepare('SELECT 1 FROM managers WHERE username = ?').get(username)) return fail('שם המשתמש כבר קיים');
+  db.prepare('INSERT INTO managers (username, name, phone, password_hash) VALUES (?,?,?,?)')
+    .run(username, str(b.name) || username, str(b.phone), bcrypt.hashSync(String(b.password), 10));
+  back(res, '/admin/users', `המשתמש ${username} נוסף`);
+});
+
+function loadUser(req, res, next) {
+  const m = db.prepare('SELECT * FROM managers WHERE id = ?').get(Number(req.params.id));
+  if (!m) return res.status(404).render('error', { title: 'לא נמצא', message: 'המשתמש לא נמצא' });
+  req.user = m;
+  next();
+}
+
+r.post('/users/:id', loadUser, (req, res) => {
+  db.prepare('UPDATE managers SET name = ?, phone = ? WHERE id = ?')
+    .run(str(req.body.name) || req.user.name, str(req.body.phone), req.user.id);
+  back(res, '/admin/users', 'נשמר');
+});
+
+r.post('/users/:id/password', loadUser, (req, res) => {
+  const pw = String(req.body.password || '');
+  if (pw.length < 8) return back(res, '/admin/users', 'סיסמה: לפחות 8 תווים');
+  db.prepare('UPDATE managers SET password_hash = ? WHERE id = ?').run(bcrypt.hashSync(pw, 10), req.user.id);
+  back(res, '/admin/users', `הסיסמה של ${req.user.username} עודכנה`);
+});
+
+r.post('/users/:id/delete', loadUser, (req, res) => {
+  if (req.user.id === req.manager.id) return back(res, '/admin/users', 'אי אפשר למחוק את המשתמש שאיתו נכנסת');
+  db.prepare('DELETE FROM managers WHERE id = ?').run(req.user.id);
+  back(res, '/admin/users', `המשתמש ${req.user.username} נמחק`);
 });
 
 // ───────────────────────── Messages log & automations

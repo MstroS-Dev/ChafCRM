@@ -26,6 +26,7 @@
     <a href="/admin/messages" class="<%= path.startsWith('/admin/messages') ? 'on' : '' %>">הודעות</a>
   </nav>
   <span class="spacer"></span>
+  <a href="/admin/users" title="משתמשים והגדרות">⚙️ משתמשים</a>
   <form method="post" action="/logout" class="inline"><button class="link" type="submit">יציאה</button></form>
 </header>
 <% } else if (shellMode === 'crew') { %>
